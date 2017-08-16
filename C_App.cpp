@@ -25,19 +25,11 @@ C_App::C_App(){
    
    /////////////////////////////////////////////
    //Fill the interface combo:
-   C_DArray*        pDA_Interface = 0;
-   S_Net_Interface* pSInterface   = 0;
-   
-   if((pDA_Interface = CNet.CNInterface.get_pDA_Interface())){
-      for(int n = 0; n < pDA_Interface->getnItems(); n++){
-         S_C_DArray* pCA_F = pDA_Interface->getpItem(n);
-         if((pSInterface = (S_Net_Interface*)pCA_F->pData->getpBuffer()))
-	    scombo.interface.append(pSInterface->_ps_Name);
-      }
-   }else{
-      cout << "ERROR: CNInterface.get_pDA_Interface" << endl;
-      return;
-   }
+   const vector<S_Net_Interface>* pDA_Interface = CNet.CNInterface.get_pDA_Interface();
+
+   for(auto iface : *pDA_Interface) scombo.interface.append(iface.ps_Name);
+
+   /////////////////////////////////////////////
    
    scombo.interface.set_active(CNet.CNInterface.get_First_Active());
    scombo.interface.set_size_request(84, 30); 
@@ -198,21 +190,14 @@ C_App::~C_App(){
 // [ on_button_send ]
 //////////////////////////////////////////////////////////////////////////////////
 void C_App::on_button_send(){
-   C_DArray*        pDA_Interface = 0;
-   S_Net_Interface* pSInterface   = 0;
-   
-   //////////////////////////////
 
-   if((pDA_Interface = CNet.CNInterface.get_pDA_Interface())){
-     
-      int nInterface = scombo.interface.get_active_row_number();
-     
-      S_C_DArray* pCA_F = pDA_Interface->getpItem(nInterface);
-     
-      if(!(pSInterface = (S_Net_Interface*)pCA_F->pData->getpBuffer())){
-         cout << "ERROR: pSInterface" << endl;
-         return;
-      }
+   const S_Net_Interface* pSInterface = 0;
+   
+   pSInterface = CNet.CNInterface.get_pInterface(scombo.interface.get_active_row_number());
+   
+   if(pSInterface == nullptr){
+      cout << "Error get_pInterface:" << scombo.interface.get_active_row_number() << endl;  
+      return; 
    }
    
    //////////////////////////////

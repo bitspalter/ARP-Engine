@@ -14,14 +14,12 @@ int C_Net::start(){
       return(C_NET_ERROR);
    }
 
-   CA_Arp.create(1, 5000);
-   
    return(C_NET_READY);
 }
 //////////////////////////////////////////////////////////////////////////////////
 // [ send ]
 //////////////////////////////////////////////////////////////////////////////////
-int C_Net::send(S_Net_Interface* pSInterface, S_ArpPacket* pSArp, int cPackets, int cSleep){
+int C_Net::send(const S_Net_Interface* pSInterface, S_ArpPacket* pSArp, int cPackets, int cSleep){
   
    if(!pSInterface || !pSArp || !cPackets) return(C_NET_ERROR);
 
@@ -31,7 +29,7 @@ int C_Net::send(S_Net_Interface* pSInterface, S_ArpPacket* pSArp, int cPackets, 
    CNArp.getPacket(pData, &cData, pSArp);
    
    CNRaw.open(pSInterface);
-   CNRaw.start(C_NET_ID_ARP, &CA_Arp);
+   CNRaw.start(C_NET_ID_ARP, &CA_Arp[0], C_NET_BUFFER);
 
    usleep(50000);
    
@@ -55,32 +53,32 @@ void C_Net::on_arp_data(int id, int cData){
    if(id == C_NET_ID_ARP){
      
       if(cData < cETHERNET_HEADER + cARP_HEADER) return;
-      
-      UCHAR* pBuffer = (UCHAR*)CA_Arp.getpBuffer();
+
+      UCHAR* pBuffer = &CA_Arp[0];
       
       ETHERNET_HEADER* pRCV_ethhdr = (ETHERNET_HEADER*)pBuffer;
       ARP_HEADER*      pRCV_arp    = (ARP_HEADER*)(pBuffer + cETHERNET_HEADER);
    
       if(pRCV_ethhdr->Type == ETH_TYP_ARP){
 
-	 if(pRCV_arp->ARP_OpCode == ARP_REQUEST){
-	    cout << "ARP_REQUEST" << endl;
-	 }else
+      if(pRCV_arp->ARP_OpCode == ARP_REQUEST){
+         cout << "ARP_REQUEST" << endl;
+      }else
          if(pRCV_arp->ARP_OpCode == ARP_RESPONSE){
-	    cout << "ARP_RESPONSE" << endl;
-	 }
-	    
+            cout << "ARP_RESPONSE" << endl;
+         }
+
          cout << "IP:" << dec 
-	               << (int)pRCV_arp->ARP_IP_S[0] << "." << (int)pRCV_arp->ARP_IP_S[1] << "." 
-	               << (int)pRCV_arp->ARP_IP_S[2] << "." << (int)pRCV_arp->ARP_IP_S[3] << endl;
-			     
+              << (int)pRCV_arp->ARP_IP_S[0] << "." << (int)pRCV_arp->ARP_IP_S[1] << "." 
+              << (int)pRCV_arp->ARP_IP_S[2] << "." << (int)pRCV_arp->ARP_IP_S[3] << endl;
+  
          cout << "MAC:" << hex 
-                        << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[0] << ":"
-                        << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[1] << ":" 
-			<< setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[2] << ":"
-                        << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[3] << ":" 
-			<< setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[4] << ":" 
-			<< setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[5] << endl;
+              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[0] << ":"
+              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[1] << ":" 
+              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[2] << ":"
+              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[3] << ":" 
+              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[4] << ":" 
+              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[5] << endl;
       }
    }
 }

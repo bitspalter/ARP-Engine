@@ -29,15 +29,15 @@ class C_Thread {
       // [ create ]
       ////////////////////////////////////////////////////////////////////
       int create(T* pClass, void (T::*pFunc)()){
-	
+
          if(!pClass || !pFunc || bRunning == true) return(C_THREAD_ERROR);
 
          if(pthread_create(&thread_id, NULL, pThread, this) != 0) return(C_THREAD_ERROR);
-	   
+
          bRunning = true;
 
          C_Thread::pClass = pClass; 
-	 C_Thread::pFunc  = pFunc;
+         C_Thread::pFunc  = pFunc;
 
          return(C_THREAD_READY);
       }

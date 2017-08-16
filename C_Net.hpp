@@ -4,7 +4,7 @@
 //
 // Net
 //
-// [::Last modi: 01.03.17 L.ey (µ~)::]
+// [::Last modi: 16.08.17 L.ey (µ~)::]
 //
 //
 #ifndef _C_NET_H_
@@ -43,6 +43,8 @@
    
    const int C_NET_ID_ARP = 0xFFAA;
    
+   const int C_NET_BUFFER = 0x1400;
+   
 //////////////////////////////////////////////////////////////////////////////////
 // STRUCT
 //////////////////////////////////////////////////////////////////////////////////
@@ -59,24 +61,24 @@
          C_Net(){};
         ~C_Net(){};
 
-	 int start();
-	 int send(S_Net_Interface* pSInterface, S_ArpPacket* pSArp, int cPackets, int cSleep);
+         int start();
+         int send(const S_Net_Interface* pSInterface, S_ArpPacket* pSArp, int cPackets, int cSleep);
 
-	 ///////////////////////////////////////////////////////////////
+         ///////////////////////////////////////////////////////////////
        
          C_Net_Interface  CNInterface;
-	 
-	 C_Array CA_Arp;
-	 
+
+         array<unsigned char, C_NET_BUFFER> CA_Arp;
+
          C_Net_Raw_Arp CNArp;
-	 C_Net_Raw     CNRaw;
-	 
-	 /////////////////////////////////////////
-	 
-	 // Recive Signal
-	 void on_arp_data(int id, int cData);
-	 
-	 Glib::Dispatcher sig_arp_data;
+         C_Net_Raw     CNRaw;
+
+         /////////////////////////////////////////
+
+         // Recive Signal
+         void on_arp_data(int id, int cData);
+
+         Glib::Dispatcher sig_arp_data;
 
       private: 
 
