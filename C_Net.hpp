@@ -15,6 +15,7 @@
    #include <string>
    #include <sstream>
    #include <iomanip>
+   #include <mutex>
    
    #include <errno.h>
    
@@ -41,8 +42,6 @@
    const int C_NET_ERROR = 0x00;
    const int C_NET_READY = 0x01;
    
-   const int C_NET_ID_ARP = 0xFFAA;
-   
    const int C_NET_BUFFER = 0x1400;
    
 //////////////////////////////////////////////////////////////////////////////////
@@ -54,7 +53,7 @@
 // CLASS
 //////////////////////////////////////////////////////////////////////////////////
    
-   class C_Net : public sigc::trackable {
+   class C_Net {
      
       public:
 	
@@ -69,21 +68,25 @@
          C_Net_Interface  CNInterface;
 
          array<unsigned char, C_NET_BUFFER> CA_Arp;
-
+         array<unsigned char, C_NET_BUFFER> CA_Buffer;
+         
+         int cData;
+         
          C_Net_Raw_Arp CNArp;
          C_Net_Raw     CNRaw;
 
          /////////////////////////////////////////
-
-         // Recive Signal
-         void on_arp_data(int id, int cData);
-
-         Glib::Dispatcher sig_arp_data;
-
+         // Signal
+         Glib::Dispatcher m_Dispatcher;
+         
+         void notify();
+         void on_data();
+         
+         mutable mutex m_Mutex;
+         
       private: 
 
          int status;
    };
  
 #endif // _C_NET_H_
- 

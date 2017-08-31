@@ -20,8 +20,8 @@ C_App::C_App(){
    }
    
    /////////////////////////////////////////////
-   // signal
-   CNet.CNRaw.signal_data().connect(sigc::mem_fun(CNet, &C_Net::on_arp_data));
+   // Connect the handler to the dispatcher.
+   CNet.m_Dispatcher.connect(sigc::mem_fun(CNet, &C_Net::on_data));
    
    /////////////////////////////////////////////
    //Fill the interface combo:

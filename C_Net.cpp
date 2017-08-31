@@ -28,8 +28,8 @@ int C_Net::send(const S_Net_Interface* pSInterface, S_ArpPacket* pSArp, int cPac
    
    CNArp.getPacket(pData, &cData, pSArp);
    
-   CNRaw.open(pSInterface);
-   CNRaw.start(C_NET_ID_ARP, &CA_Arp[0], C_NET_BUFFER);
+   CNRaw.open(pSInterface, this);
+   CNRaw.start(&CA_Arp[0], C_NET_BUFFER, &this->cData);
 
    usleep(50000);
    
@@ -46,39 +46,46 @@ int C_Net::send(const S_Net_Interface* pSInterface, S_ArpPacket* pSArp, int cPac
    return(C_NET_READY);
 }
 //////////////////////////////////////////////////////////////////////////////////
-// [ on_arp_data ]
+// [ notify ]
 //////////////////////////////////////////////////////////////////////////////////
-void C_Net::on_arp_data(int id, int cData){
+void C_Net::notify(){
+   m_Dispatcher.emit();
+}
+//////////////////////////////////////////////////////////////////////////////////
+// [ on_data ]
+//////////////////////////////////////////////////////////////////////////////////
+void C_Net::on_data(){
 
-   if(id == C_NET_ID_ARP){
-     
-      if(cData < cETHERNET_HEADER + cARP_HEADER) return;
+   if(cData < (int)(cETHERNET_HEADER + cARP_HEADER)) return;
 
-      UCHAR* pBuffer = &CA_Arp[0];
+   {
+      lock_guard<mutex> lock(m_Mutex);
+      if(cData < C_NET_BUFFER) memcpy(&CA_Buffer[0], &CA_Arp[0], cData);
+      else return;
+   }
       
-      ETHERNET_HEADER* pRCV_ethhdr = (ETHERNET_HEADER*)pBuffer;
-      ARP_HEADER*      pRCV_arp    = (ARP_HEADER*)(pBuffer + cETHERNET_HEADER);
+   ETHERNET_HEADER* pRCV_ethhdr = (ETHERNET_HEADER*)&CA_Buffer[0];
+   ARP_HEADER*      pRCV_arp    = (ARP_HEADER*)(&CA_Buffer[cETHERNET_HEADER]);
    
-      if(pRCV_ethhdr->Type == ETH_TYP_ARP){
+   if(pRCV_ethhdr->Type == ETH_TYP_ARP){
 
       if(pRCV_arp->ARP_OpCode == ARP_REQUEST){
          cout << "ARP_REQUEST" << endl;
       }else
-         if(pRCV_arp->ARP_OpCode == ARP_RESPONSE){
-            cout << "ARP_RESPONSE" << endl;
-         }
-
-         cout << "IP:" << dec 
-              << (int)pRCV_arp->ARP_IP_S[0] << "." << (int)pRCV_arp->ARP_IP_S[1] << "." 
-              << (int)pRCV_arp->ARP_IP_S[2] << "." << (int)pRCV_arp->ARP_IP_S[3] << endl;
-  
-         cout << "MAC:" << hex 
-              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[0] << ":"
-              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[1] << ":" 
-              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[2] << ":"
-              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[3] << ":" 
-              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[4] << ":" 
-              << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[5] << endl;
+      if(pRCV_arp->ARP_OpCode == ARP_RESPONSE){
+         cout << "ARP_RESPONSE" << endl;
       }
+
+      cout << "IP:" << dec 
+           << (int)pRCV_arp->ARP_IP_S[0] << "." << (int)pRCV_arp->ARP_IP_S[1] << "." 
+           << (int)pRCV_arp->ARP_IP_S[2] << "." << (int)pRCV_arp->ARP_IP_S[3] << endl;
+  
+      cout << "MAC:" << hex 
+           << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[0] << ":"
+           << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[1] << ":" 
+           << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[2] << ":"
+           << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[3] << ":" 
+           << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[4] << ":" 
+           << setfill('0') << setw(2) << (int)pRCV_arp->ARP_MAC_S[5] << endl;
    }
 }

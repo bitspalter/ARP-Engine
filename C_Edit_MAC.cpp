@@ -5,6 +5,14 @@
 #include "C_Edit_MAC.hpp"
 
 //////////////////////////////////////////////////////////////////////////////////
+// [ Konstructor ]  
+//////////////////////////////////////////////////////////////////////////////////
+C_Edit_MAC::C_Edit_MAC(){
+   for(int n = 0; n < 6; n++){
+      aEdit[n].set_max_length(2);
+   }   
+}
+//////////////////////////////////////////////////////////////////////////////////
 // [clear] 
 //////////////////////////////////////////////////////////////////////////////////
 void C_Edit_MAC::clear(){
@@ -115,7 +123,7 @@ int C_Edit_MAC::isHEX(const char* psData){
 
    Glib::ustring T = psData;
    
-   for(int i = 0; i < T.size(); i++){
+   for(unsigned int i = 0; i < T.size(); i++){
       if((psData[i] < '0' || psData[i] > '9') && 
          (psData[i] < 'a' || psData[i] > 'f') && 
          (psData[i] < 'A' || psData[i] > 'F')) return(C_EDIT_MAC_ERROR);
@@ -135,7 +143,7 @@ int C_Edit_MAC::hexToDec(const char* psData){
 
    Glib::ustring T = psData;
    
-   for(int i = 0; i < T.size(); i++){
+   for(unsigned int i = 0; i < T.size(); i++){
       if(i == 0) Shift = 16;
       if(i == 1) Shift =  1;
 

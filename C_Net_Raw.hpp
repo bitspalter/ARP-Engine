@@ -2,91 +2,73 @@
 //+++++++++++++++++[ RawSocket_Class_Header ]+++++++++++++++++++++++++++++++++++//
 //////////////////////////////////////////////////////////////////////////////////
 //
-//
-// [::Raw Socket Class::]
-//
-// [::Last modi: 04.01.17 L.ey (µ~)::]  
+// [::Last modi: 30.08.17 L.ey (µ~)::]  
 //
 //
 #ifndef _C_NET_RAW_H_
  #define _C_NET_RAW_H_
  
-  #include <iostream>
+ #include <iostream>
+ #include <thread> 
+ using namespace std;
+  
+ #include <string.h>
+ #include <sys/socket.h>
+ #include <unistd.h>
+ #include <errno.h>
 
-  using namespace std;
+ #include <linux/if_packet.h>
   
-  #include <string.h>
-  #include <sys/socket.h>
-  #include <unistd.h>
-  #include <errno.h>
-  
-  #include <linux/if_packet.h>
-  
-  #include "C_Thread.hpp"
-  #include "C_Net_Interface.hpp"
+ #include "C_Net_Interface.hpp"
 
-  #include <sigc++/sigc++.h>
+ #include <sigc++/sigc++.h>
   
 //////////////////////////////////////////////////////////////////////////////////
 
-   const int C_NET_RAW_READY  = 0x01;
-   const int C_NET_RAW_ERROR  = 0x00;
+ const int C_NET_RAW_READY  = 0x01;
+ const int C_NET_RAW_ERROR  = 0x00;
 
 //////////////////////////////////////////////////////////////////////////////////
 
-   class C_Net_Raw {
+ class C_Net; // signal
+ 
+ class C_Net_Raw {
      
-      public: 
+    public: 
 
-         C_Net_Raw();  
-        ~C_Net_Raw();  
+       C_Net_Raw();  
+      ~C_Net_Raw();  
 
-         int open(const S_Net_Interface* pSInterface);
-         int close();
+       int open(const S_Net_Interface* pSInterface, C_Net* pCNet);
+       int close();
 
-         int send(unsigned char* pData, unsigned int cData);
-         int recv();
+       int send(unsigned char* pData, unsigned int cData);
 
-         // Non Blocking
-         int start(int id, unsigned char* pBuffer, unsigned int cBuffer);
-         int stop();
+       // Non Blocking
+       int start(unsigned char* pBuffer, unsigned int cBuffer, int* pcData);
+       int stop();
 
-         ///////////////////////////////
-         //
-         // Inline 
-         //
-         bool bRunning(){return(bRun);};
+    private:
 
-         int getSocket(){return(sockfd);};
+       struct sockaddr_ll socket_address;
 
-         // Signal
-         typedef sigc::signal<void, int, int> type_signal_data;
-         type_signal_data signal_data();
+       int  sockfd;
 
-      protected:
-         type_signal_data m_signal_data;
+       bool bOpen, bRun;
 
-      private:
-
-         struct sockaddr_ll socket_address;
-
-         int  sockfd;
-
-         bool bOpen;
-
-         // ((( RECIVE THREAD )))
-         bool bRun;
-
-         C_Thread <C_Net_Raw> CThread;
-
-         void run();
-
-         int  id;
-
-         /////////////////
+       /////////////////
          
-         unsigned char* pBuffer;
-         unsigned int   cBuffer;
-   };
+       unsigned char* pBuffer;
+       unsigned int   cBuffer;
+       
+       /////////////////
+       
+       C_Net* pCNet;
+       int* pcData;
+
+       // thread
+       void run();       
+       thread m_thread;
+ };
 
 #endif // _C_NET_RAW_H_

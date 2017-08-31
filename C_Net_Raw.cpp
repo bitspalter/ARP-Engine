@@ -1,15 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////////
 // [ Raw_Socket_Class_Source ]
 //////////////////////////////////////////////////////////////////////////////////
-
+#include "C_Net.hpp"
 #include "C_Net_Raw.hpp"
 
 //////////////////////////////////////////////////////////////////////////////////
 // [Konstructor]  
 //////////////////////////////////////////////////////////////////////////////////
 C_Net_Raw::C_Net_Raw(){
-   bOpen = false;
-   bRun  = false;
+   bOpen = bRun = false;
 }
 //////////////////////////////////////////////////////////////////////////////////
 // [Destructor]  
@@ -19,9 +18,9 @@ C_Net_Raw::~C_Net_Raw(){
 //////////////////////////////////////////////////////////////////////////////////
 // [open]  
 //////////////////////////////////////////////////////////////////////////////////
-int C_Net_Raw::open(const S_Net_Interface* pSInterface){
+int C_Net_Raw::open(const S_Net_Interface* pSInterface, C_Net* pCNet_Ex){
 
-   if(bOpen || !pSInterface) return(C_NET_RAW_READY);
+   if(bOpen || !pSInterface || !pCNet_Ex) return(C_NET_RAW_READY);
   
    memset(&socket_address, 0, sizeof(struct sockaddr_ll));
    
@@ -29,7 +28,7 @@ int C_Net_Raw::open(const S_Net_Interface* pSInterface){
    socket_address.sll_halen   = 6;
    
    if((sockfd = socket(AF_PACKET, SOCK_RAW, 0x0300)) == -1){
-      cout << "ERROR: socket " << strerror(errno) << endl;
+      cout << "ERROR: socket " << strerror(errno) << " Nr:" << errno << endl;
       return(C_NET_RAW_ERROR);
    }
    
@@ -43,20 +42,28 @@ int C_Net_Raw::open(const S_Net_Interface* pSInterface){
    ioctl(sockfd, SIOCGIFFLAGS, &ifopts);
    ifopts.ifr_flags |= IFF_PROMISC;
    ioctl(sockfd, SIOCSIFFLAGS, &ifopts);
+   
+   /////////////////////////////
+   //struct timeval tv;
+   //tv.tv_sec = 30;  /* 30 Secs Timeout */
+   //setsockopt(sockid, SOL_SOCKET, SO_RCVTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
 
+   /////////////////////////////
+   pCNet = pCNet_Ex;
+   
    return(C_NET_RAW_READY);
 }
 //////////////////////////////////////////////////////////////////////////////////
 // [shutdown]  
 //////////////////////////////////////////////////////////////////////////////////
 int C_Net_Raw::close(){
-  
+
    if(bOpen){
       if(bRun) bRun = false;
       ::close(sockfd);
       bOpen = false;
    }
-   
+
    return(C_NET_RAW_READY);
 }
 //////////////////////////////////////////////////////////////////////////////////
@@ -67,7 +74,7 @@ int C_Net_Raw::send(unsigned char* pData, unsigned int cData){
    if(bOpen){
       if(pData != 0 && cData > 0){
          if(sendto(sockfd, pData, cData, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0){
-            cout << "ERROR: send " << strerror(errno) << endl;
+            cout << "ERROR: send " << strerror(errno) << " Nr:" << errno << endl;
             return(C_NET_RAW_ERROR);
          }
       }
@@ -78,19 +85,21 @@ int C_Net_Raw::send(unsigned char* pData, unsigned int cData){
 //////////////////////////////////////////////////////////////////////////////////
 // [start]  
 //////////////////////////////////////////////////////////////////////////////////
-int C_Net_Raw::start(int idEx, unsigned char* pBuf, unsigned int cBuf){
+int C_Net_Raw::start(unsigned char* pBuf, unsigned int cBuf, int* pcDataEx){
   
-   if(bRun || !bOpen || !pBuf || !cBuf) return(C_NET_RAW_ERROR);
+   if(bRun || !bOpen || !pBuf || !cBuf || !pcData) return(C_NET_RAW_ERROR);
 
    ////////////
    pBuffer = pBuf;
    cBuffer = cBuf;
-   id      = idEx;
+   pcData  = pcDataEx;
    ////////////
+
+   m_thread = thread([this]{this->run();});
    
-   if(CThread.create(this, &C_Net_Raw::run) == C_THREAD_READY){
-      bRun = true;
-   }else return(C_NET_RAW_ERROR);
+   m_thread.detach();
+   
+   bRun = true;
    
    return(C_NET_RAW_READY);
 }
@@ -98,42 +107,19 @@ int C_Net_Raw::start(int idEx, unsigned char* pBuf, unsigned int cBuf){
 // [stop]  
 //////////////////////////////////////////////////////////////////////////////////
 int C_Net_Raw::stop(){
-  if(!bRun || !bOpen) return(C_NET_RAW_ERROR);
-   CThread.terminate();
-   bRun = false;
-   return(C_NET_RAW_READY);
-}
-//////////////////////////////////////////////////////////////////////////////////
-// [recv]  
-//////////////////////////////////////////////////////////////////////////////////
-int C_Net_Raw::recv(){
+    
+   if(!bRun || !bOpen) return(C_NET_RAW_ERROR);
 
-   if(CThread.create(this, &C_Net_Raw::run) == C_THREAD_READY){
-      bRun = true;
-   }else return(C_NET_RAW_ERROR);
+   bRun = false;
    
    return(C_NET_RAW_READY);
 }
 //////////////////////////////////////////////////////////////////////////////////
-// [run]  
+// [run] (thread)
 //////////////////////////////////////////////////////////////////////////////////
 void C_Net_Raw::run(){
-
-   struct sockaddr sa;
-   
-   int cData  = 0;
-   int sa_len = sizeof(sa);
-   
    while(bRun){
-      cData = recvfrom(sockfd, pBuffer, cBuffer, 0, &sa, (socklen_t*) &sa_len);
-      if(cData > 0) m_signal_data.emit(id, cData);
+      *pcData = recvfrom(sockfd, pBuffer, cBuffer, 0, 0, 0);
+      if(*pcData > 0) pCNet->notify();
    }
-   
-   return;
-}
-//////////////////////////////////////////////////////////////////////////////////
-// [signal_data]
-//////////////////////////////////////////////////////////////////////////////////
-C_Net_Raw::type_signal_data C_Net_Raw::signal_data(){
-   return(m_signal_data);
 }
