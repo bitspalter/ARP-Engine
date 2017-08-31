@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // [ Raw_Socket_Class_Source ]
 //////////////////////////////////////////////////////////////////////////////////
-#include "C_Net.hpp"
+
 #include "C_Net_Raw.hpp"
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -18,9 +18,9 @@ C_Net_Raw::~C_Net_Raw(){
 //////////////////////////////////////////////////////////////////////////////////
 // [open]  
 //////////////////////////////////////////////////////////////////////////////////
-int C_Net_Raw::open(const S_Net_Interface* pSInterface, C_Net* pCNet_Ex){
+int C_Net_Raw::open(const S_Net_Interface* pSInterface){
 
-   if(bOpen || !pSInterface || !pCNet_Ex) return(C_NET_RAW_READY);
+   if(bOpen || !pSInterface) return(C_NET_RAW_READY);
   
    memset(&socket_address, 0, sizeof(struct sockaddr_ll));
    
@@ -47,9 +47,6 @@ int C_Net_Raw::open(const S_Net_Interface* pSInterface, C_Net* pCNet_Ex){
    //struct timeval tv;
    //tv.tv_sec = 30;  /* 30 Secs Timeout */
    //setsockopt(sockid, SOL_SOCKET, SO_RCVTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
-
-   /////////////////////////////
-   pCNet = pCNet_Ex;
    
    return(C_NET_RAW_READY);
 }
@@ -57,13 +54,13 @@ int C_Net_Raw::open(const S_Net_Interface* pSInterface, C_Net* pCNet_Ex){
 // [shutdown]  
 //////////////////////////////////////////////////////////////////////////////////
 int C_Net_Raw::close(){
-
+  
    if(bOpen){
       if(bRun) bRun = false;
       ::close(sockfd);
       bOpen = false;
    }
-
+   
    return(C_NET_RAW_READY);
 }
 //////////////////////////////////////////////////////////////////////////////////
@@ -85,16 +82,16 @@ int C_Net_Raw::send(unsigned char* pData, unsigned int cData){
 //////////////////////////////////////////////////////////////////////////////////
 // [start]  
 //////////////////////////////////////////////////////////////////////////////////
-int C_Net_Raw::start(unsigned char* pBuf, unsigned int cBuf, int* pcDataEx){
+int C_Net_Raw::start(int idEx, unsigned char* pBuf, unsigned int cBuf){
   
-   if(bRun || !bOpen || !pBuf || !cBuf || !pcData) return(C_NET_RAW_ERROR);
+   if(bRun || !bOpen || !pBuf || !cBuf) return(C_NET_RAW_ERROR);
 
    ////////////
    pBuffer = pBuf;
    cBuffer = cBuf;
-   pcData  = pcDataEx;
+   id      = idEx;
    ////////////
-
+   
    m_thread = thread([this]{this->run();});
    
    m_thread.detach();
@@ -111,15 +108,24 @@ int C_Net_Raw::stop(){
    if(!bRun || !bOpen) return(C_NET_RAW_ERROR);
 
    bRun = false;
-   
+  
    return(C_NET_RAW_READY);
 }
 //////////////////////////////////////////////////////////////////////////////////
 // [run] (thread)
 //////////////////////////////////////////////////////////////////////////////////
 void C_Net_Raw::run(){
+
+   int cData  = 0;
+
    while(bRun){
-      *pcData = recvfrom(sockfd, pBuffer, cBuffer, 0, 0, 0);
-      if(*pcData > 0) pCNet->notify();
+      cData = recvfrom(sockfd, pBuffer, cBuffer, 0, 0, 0);
+      if(cData > 0) m_signal_data.emit(id, cData);
    }
+}
+//////////////////////////////////////////////////////////////////////////////////
+// [signal_data]
+//////////////////////////////////////////////////////////////////////////////////
+C_Net_Raw::type_signal_data C_Net_Raw::signal_data(){
+   return(m_signal_data);
 }

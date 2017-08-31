@@ -28,8 +28,8 @@ int C_Net::send(const S_Net_Interface* pSInterface, S_ArpPacket* pSArp, int cPac
    
    CNArp.getPacket(pData, &cData, pSArp);
    
-   CNRaw.open(pSInterface, this);
-   CNRaw.start(&CA_Arp[0], C_NET_BUFFER, &this->cData);
+   CNRaw.open(pSInterface);
+   CNRaw.start(C_NET_ID_ARP, &CA_Arp[0], C_NET_BUFFER);
 
    usleep(50000);
    
@@ -46,26 +46,16 @@ int C_Net::send(const S_Net_Interface* pSInterface, S_ArpPacket* pSArp, int cPac
    return(C_NET_READY);
 }
 //////////////////////////////////////////////////////////////////////////////////
-// [ notify ]
+// [ on_arp_data ]
 //////////////////////////////////////////////////////////////////////////////////
-void C_Net::notify(){
-   m_Dispatcher.emit();
-}
-//////////////////////////////////////////////////////////////////////////////////
-// [ on_data ]
-//////////////////////////////////////////////////////////////////////////////////
-void C_Net::on_data(){
+void C_Net::on_arp_data(int id, int cData){
 
+   if(id != C_NET_ID_ARP) return;
+   
    if(cData < (int)(cETHERNET_HEADER + cARP_HEADER)) return;
-
-   {
-      lock_guard<mutex> lock(m_Mutex);
-      if(cData < C_NET_BUFFER) memcpy(&CA_Buffer[0], &CA_Arp[0], cData);
-      else return;
-   }
-      
-   ETHERNET_HEADER* pRCV_ethhdr = (ETHERNET_HEADER*)&CA_Buffer[0];
-   ARP_HEADER*      pRCV_arp    = (ARP_HEADER*)(&CA_Buffer[cETHERNET_HEADER]);
+ 
+   ETHERNET_HEADER* pRCV_ethhdr = (ETHERNET_HEADER*)&CA_Arp[0];
+   ARP_HEADER*      pRCV_arp    = (ARP_HEADER*)(&CA_Arp[cETHERNET_HEADER]);
    
    if(pRCV_ethhdr->Type == ETH_TYP_ARP){
 

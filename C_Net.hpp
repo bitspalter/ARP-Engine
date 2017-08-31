@@ -15,7 +15,6 @@
    #include <string>
    #include <sstream>
    #include <iomanip>
-   #include <mutex>
    
    #include <errno.h>
    
@@ -43,6 +42,7 @@
    const int C_NET_READY = 0x01;
    
    const int C_NET_BUFFER = 0x1400;
+   const int C_NET_ID_ARP = 0xFFAA;
    
 //////////////////////////////////////////////////////////////////////////////////
 // STRUCT
@@ -68,21 +68,13 @@
          C_Net_Interface  CNInterface;
 
          array<unsigned char, C_NET_BUFFER> CA_Arp;
-         array<unsigned char, C_NET_BUFFER> CA_Buffer;
-         
-         int cData;
          
          C_Net_Raw_Arp CNArp;
          C_Net_Raw     CNRaw;
 
          /////////////////////////////////////////
          // Signal
-         Glib::Dispatcher m_Dispatcher;
-         
-         void notify();
-         void on_data();
-         
-         mutable mutex m_Mutex;
+         void on_arp_data(int id, int cData);
          
       private: 
 

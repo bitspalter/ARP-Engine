@@ -10,7 +10,8 @@
 C_App::C_App(){
   
    this->set_title("ARP - ENGINE");
-   this->resize(535, 220);
+   this->set_resizable(false);
+   this->set_size_request(534, 225);
 
    /////////////////////////////////////////////
    
@@ -20,8 +21,8 @@ C_App::C_App(){
    }
    
    /////////////////////////////////////////////
-   // Connect the handler to the dispatcher.
-   CNet.m_Dispatcher.connect(sigc::mem_fun(CNet, &C_Net::on_data));
+   // signal
+   CNet.CNRaw.signal_data().connect(sigc::mem_fun(CNet, &C_Net::on_arp_data));
    
    /////////////////////////////////////////////
    //Fill the interface combo:
@@ -126,19 +127,19 @@ C_App::C_App(){
    m_layout.put(scombo.sleep,     302,  0);
    m_layout.put(scombo.type,      396,  0);
    
-   m_layout.put(slabel.ip_s,       10,  90);
+   m_layout.put(slabel.ip_s,       10,  95);
    m_layout.put(EditIpS.aEdit[0],  10, 120);
    m_layout.put(EditIpS.aEdit[1],  52, 120);
    m_layout.put(EditIpS.aEdit[2],  94, 120);
    m_layout.put(EditIpS.aEdit[3], 136, 120);
    
-   m_layout.put(slabel.ip_d,      272,  90);
+   m_layout.put(slabel.ip_d,      272,  95);
    m_layout.put(EditIpD.aEdit[0], 272, 120);
    m_layout.put(EditIpD.aEdit[1], 314, 120);
    m_layout.put(EditIpD.aEdit[2], 356, 120);
    m_layout.put(EditIpD.aEdit[3], 398, 120);
    
-   m_layout.put(slabel.mac_s,       10, 150);
+   m_layout.put(slabel.mac_s,       10, 155);
    m_layout.put(EditMacS.aEdit[0],  10, 180);
    m_layout.put(EditMacS.aEdit[1],  52, 180);
    m_layout.put(EditMacS.aEdit[2],  94, 180);
@@ -146,7 +147,7 @@ C_App::C_App(){
    m_layout.put(EditMacS.aEdit[4], 178, 180);
    m_layout.put(EditMacS.aEdit[5], 220, 180);
    
-   m_layout.put(slabel.mac_d,      272, 150);
+   m_layout.put(slabel.mac_d,      272, 155);
    m_layout.put(EditMacD.aEdit[0], 272, 180);
    m_layout.put(EditMacD.aEdit[1], 314, 180);
    m_layout.put(EditMacD.aEdit[2], 356, 180);
@@ -154,7 +155,7 @@ C_App::C_App(){
    m_layout.put(EditMacD.aEdit[4], 440, 180);
    m_layout.put(EditMacD.aEdit[5], 482, 180);
    
-   m_layout.put(slabel.mac_eth_s,      10, 30);
+   m_layout.put(slabel.mac_eth_s,      10, 35);
    m_layout.put(EditEthMacS.aEdit[0],  10, 60);
    m_layout.put(EditEthMacS.aEdit[1],  52, 60);
    m_layout.put(EditEthMacS.aEdit[2],  94, 60);
@@ -162,7 +163,7 @@ C_App::C_App(){
    m_layout.put(EditEthMacS.aEdit[4], 178, 60);
    m_layout.put(EditEthMacS.aEdit[5], 220, 60);
    
-   m_layout.put(slabel.mac_eth_d,     272, 30);
+   m_layout.put(slabel.mac_eth_d,     272, 35);
    m_layout.put(EditEthMacD.aEdit[0], 272, 60);
    m_layout.put(EditEthMacD.aEdit[1], 314, 60);
    m_layout.put(EditEthMacD.aEdit[2], 356, 60);
